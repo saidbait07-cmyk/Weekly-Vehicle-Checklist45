@@ -1,6 +1,0 @@
-{
-  "name": "Smart Vehicle Inspection & Fleet Management System",
-  "description": "Responsive multilingual (English, Arabic, Hindi, Urdu) vehicle inspection and fleet management platform with 31-point daily checklist, QR scanning, private fault photos, offline PWA sync, and Excel reporting.",
-  "requestFramePermissions": ["camera"],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
