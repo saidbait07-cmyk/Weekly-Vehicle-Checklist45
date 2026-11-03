@@ -1,0 +1,175 @@
+<form method="post" enctype="multipart/form-data" class="inspection-form" data-vehicle="{{vehicle.id}}" data-day="{{today}}" data-sync-url="{{url_for('sync_inspection')}}">
+  <input type="hidden" name="csrf" value="{{csrf_token()}}">
+
+  <div class="inspect-grid">
+    <!-- Left Column: Vehicle Info + 31-Row Checklist -->
+    <div class="inspect-main-col">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <span class="mono plate-tag">{{vehicle.plate}} · {{vehicle.vehicle_type}}</span>
+            <h2>{{t('inspection')}}</h2>
+            <p class="muted">{{t('checklist_help')}}</p>
+          </div>
+          <div class="inline-actions">
+            <button type="button" class="button small secondary" id="mark-all-ok-btn">Mark All OK</button>
+            <span id="offline-indicator" class="status-text status-good">{{t('online')}}</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>
+            <span>{{t('start_km')}}</span>
+            <input name="start_km" type="number" min="0" value="41350" class="mono" required>
+          </label>
+          <label>
+            <span>{{t('odometer')}}</span>
+            <input name="odometer" type="number" min="0" value="41490" class="mono" required>
+          </label>
+          <label>
+            <span>{{t('date')}}</span>
+            <input value="{{today}}" class="mono" readonly>
+          </label>
+        </div>
+
+        <div class="checklist-list" role="region" aria-label="{{t('inspection')}}">
+          <div class="check-header-row">
+            <span>#</span>
+            <span>{{t('item')}}</span>
+            <span>{{t('result')}} (OK / Not OK / N/A)</span>
+            <span>{{t('remark')}}</span>
+          </div>
+
+          {% for item in items %}
+          <div class="check-row" data-order="{{item.order}}">
+            <div class="check-num mono">
+              <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                <input
+                  type="checkbox"
+                  class="point-checkbox"
+                  name="checked_{{item.id}}"
+                  data-item-id="{{item.id}}"
+                  data-order="{{item.order}}"
+                  {% if item.order >= 28 %}checked{% endif %}
+                  aria-label="Check point {{loop.index}}: {{item_name(item)}}"
+                >
+                <span>{{loop.index}}</span>
+              </label>
+            </div>
+            <div class="check-name">
+              <strong>{{item_name(item)}}</strong>
+              {% if lang != 'en' %}
+                <small>{{item.label}}</small>
+              {% elif item.label_ar %}
+                <small dir="rtl">{{item.label_ar}}</small>
+              {% endif %}
+            </div>
+
+            {% if item.order <= 27 or item.order >= 32 %}
+            <div class="check-controls" role="radiogroup" aria-label="{{item_name(item)}}">
+              <label class="radio pass">
+                <input type="radio" name="item_{{item.id}}" value="pass" required>
+                <span>{{t('pass')}}</span>
+              </label>
+              <label class="radio fail">
+                <input type="radio" name="item_{{item.id}}" value="fail" required>
+                <span>{{t('fail')}}</span>
+              </label>
+              <label class="radio na">
+                <input type="radio" name="item_{{item.id}}" value="na" required>
+                <span>{{t('na')}}</span>
+              </label>
+            </div>
+            <input class="remark" name="remark_{{item.id}}" placeholder="{{t('remark')}}" aria-label="Remark for {{item_name(item)}}">
+
+            {% elif item.order == 28 %}
+            <div class="signoff-status">
+              <span class="status-text status-good">Autofilled</span>
+            </div>
+            <input class="remark" value="{{user.name}} ({{user.employee_id}})" readonly aria-label="{{t('driver_name')}}">
+
+            {% elif item.order == 29 %}
+            <div class="signoff-status">
+              <span class="muted">Required Sign-Off</span>
+            </div>
+            <input class="remark" name="driver_signature" value="{{user.name}}" placeholder="{{t('driver_signature')}}" aria-label="{{t('driver_signature')}}" required>
+
+            {% elif item.order == 30 %}
+            <div class="signoff-status">
+              <span class="muted">ROP License Expiry</span>
+            </div>
+            <input class="remark mono" type="date" name="license_expiry" value="2027-12-31" aria-label="{{t('license_expiry')}}" required>
+
+            {% elif item.order == 31 %}
+            <div class="signoff-status">
+              <span class="status-text status-warn">{{t('pending_approval')}}</span>
+            </div>
+            <div class="approval-note">{{t('supervisor_sign')}} · {{t('supervisor_note')}}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Column: Sticky Live Inspection Summary & Photo Upload -->
+    <aside class="inspect-side-col">
+      <section class="panel summary-sticky-panel">
+        <h2>{{t('inspection_summary')}}</h2>
+
+        <div class="summary-counters">
+          <div class="summary-row">
+            <span>{{t('total_items')}}</span>
+            <strong class="mono" id="sum-total">31</strong>
+          </div>
+          <div class="summary-row">
+            <span class="good-text">{{t('passed_label')}} ({{t('pass')}})</span>
+            <strong class="mono good-text" id="sum-pass">0</strong>
+          </div>
+          <div class="summary-row">
+            <span class="bad-text">{{t('failed_label')}} ({{t('fail')}})</span>
+            <strong class="mono bad-text" id="sum-fail">0</strong>
+          </div>
+          <div class="summary-row">
+            <span class="muted">{{t('na')}}</span>
+            <strong class="mono" id="sum-na">0</strong>
+          </div>
+        </div>
+
+        <div class="photo-upload-block">
+          <h3>{{t('photo')}}</h3>
+          <p class="muted">{{t('photo_offline_notice')}}</p>
+          <label class="photo-dropzone">
+            <input type="file" name="photos" id="photo-input" accept="image/png,image/jpeg,image/webp" multiple>
+            <span>+ {{t('add_photo')}} (JPG, PNG, WEBP · Max 5MB)</span>
+          </label>
+          <div id="photo-preview-grid" class="photo-preview-grid"></div>
+        </div>
+
+        <div class="final-status-block">
+          <h3>{{t('final_status')}}</h3>
+          <div id="live-final-status" class="final-status-banner status-good">
+            ✓ Ready for Submission
+          </div>
+        </div>
+
+        <label class="notes-block">
+          <span>{{t('notes')}}</span>
+          <textarea name="notes" rows="3" placeholder="Enter final inspection remarks..."></textarea>
+        </label>
+
+        <label class="checkline attestation-box">
+          <input type="checkbox" name="attestation" value="yes" required>
+          <span>{{t('attestation')}}</span>
+        </label>
+
+        <div class="submit-actions-row">
+          <button class="button secondary" type="button" id="save-draft">{{t('save_draft')}}</button>
+          <button class="button primary" type="submit" id="submit-inspection-btn">{{t('submit')}}</button>
+        </div>
+
+        <p class="muted" id="sync-message" role="status"></p>
+      </section>
+    </aside>
+  </div>
+</form>

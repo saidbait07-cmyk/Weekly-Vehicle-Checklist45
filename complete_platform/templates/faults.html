@@ -1,0 +1,75 @@
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h2>{{t('faults')}} ({{faults|length}})</h2>
+      <p class="muted">Track failed checklist items, view private fault photos, and record maintenance resolution actions.</p>
+    </div>
+    <div class="inline-actions">
+      <a class="button small {{'primary' if not status_filter else 'secondary'}}" href="{{url_for('faults')}}">All</a>
+      <a class="button small {{'primary' if status_filter == 'open' else 'secondary'}}" href="{{url_for('faults',status='open')}}">{{t('open')}}</a>
+      <a class="button small {{'primary' if status_filter == 'resolved' else 'secondary'}}" href="{{url_for('faults',status='resolved')}}">{{t('closed')}}</a>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>{{t('date')}}</th>
+          <th>{{t('plate')}}</th>
+          <th>{{t('item')}}</th>
+          <th>{{t('details')}}</th>
+          <th>{{t('photo')}}</th>
+          <th>{{t('fault_status')}}</th>
+          <th>{{t('actions')}}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in faults %}
+        {% set i = inspections.get(f.inspection_id) %}
+        {% set a = answers.get(f.answer_id) %}
+        <tr>
+          <td class="mono">#{{f.id}}</td>
+          <td class="mono">{{i.day if i else '—'}}</td>
+          <td class="mono">
+            {% if i %}
+              <a class="plate-link" href="{{url_for('vehicle_detail',vid=i.vehicle_id)}}">{{vehicles.get(i.vehicle_id, i.vehicle_id)}}</a>
+            {% else %}—{% endif %}
+          </td>
+          <td><strong>{{a.label_snapshot if a else 'General'}}</strong></td>
+          <td>{{f.description}}</td>
+          <td>
+            {% for p in photos.get(f.id, []) %}
+              <a class="button small secondary" href="{{url_for('fault_photo',filename=p.filename)}}" target="_blank">{{t('view')}} Photo</a>
+            {% else %}
+              <span class="muted">—</span>
+            {% endfor %}
+          </td>
+          <td>
+            <span class="status-text {{'status-bad' if f.status == 'open' else 'status-good'}}">
+              {{t('open') if f.status == 'open' else t('closed')}}
+            </span>
+          </td>
+          <td>
+            {% if f.status == 'open' and user.role in ('admin', 'supervisor') %}
+            <form method="post" action="{{url_for('resolve_fault',fid=f.id)}}" class="resolve-inline-form">
+              <input type="hidden" name="csrf" value="{{csrf_token()}}">
+              <input name="action_taken" class="resolve-input" placeholder="{{t('action_taken')}}" required>
+              <button type="submit" class="button small primary">{{t('resolve')}}</button>
+            </form>
+            {% else %}
+              <span>{{f.action_taken or '—'}}</span>
+              {% if f.resolved_by %}
+                <small class="muted" style="display:block">By {{users_map.get(f.resolved_by, '')}}</small>
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty">{{t('no_data')}}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

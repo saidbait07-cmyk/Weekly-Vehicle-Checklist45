@@ -1,0 +1,103 @@
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h2>{{t('reports')}} ({{records|length}})</h2>
+      <p class="muted">Filter inspections, review sign-offs, and export multi-sheet Excel workbooks in the selected language.</p>
+    </div>
+    <a class="button primary" href="{{url_for('export')}}">⇩ {{t('export')}} (.xlsx)</a>
+  </div>
+
+  <form method="get" action="{{url_for('reports')}}" class="search-row">
+    <input name="q" value="{{q or ''}}" placeholder="Filter by Vehicle No., Driver Name, Employee ID, or Date (YYYY-MM-DD)...">
+    <select name="status" style="max-width: 220px;">
+      <option value="">All Statuses</option>
+      <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>{{t('approved')}}</option>
+      <option value="pending_approval" {% if status_filter == 'pending_approval' %}selected{% endif %}>{{t('pending_approval')}}</option>
+    </select>
+    <button type="submit" class="button secondary">{{t('search')}}</button>
+  </form>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>{{t('date')}}</th>
+          <th>{{t('plate')}}</th>
+          <th>{{t('driver_user')}}</th>
+          <th>{{t('odometer')}}</th>
+          <th>{{t('status')}}</th>
+          <th>{{t('faults')}}</th>
+          <th>{{t('actions')}}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td class="mono">#{{r.id}}</td>
+          <td class="mono">{{r.day}}</td>
+          <td class="mono"><a class="plate-link" href="{{url_for('vehicle_detail',vid=r.vehicle_id)}}">{{vehicles.get(r.vehicle_id, r.vehicle_id)}}</a></td>
+          <td>{{names.get(r.driver_id, '—')}} (<span class="mono">{{emp_ids.get(r.driver_id, '')}}</span>)</td>
+          <td class="mono">{{r.odometer}} km</td>
+          <td>
+            <span class="status-text {{'status-good' if r.status == 'approved' else 'status-warn'}}">
+              {{t('approved') if r.status == 'approved' else t('pending_approval')}}
+            </span>
+          </td>
+          <td class="mono">
+            {{fault_counts.get(r.id, 0)}}
+            {% if open_fault_counts.get(r.id, 0) > 0 %}
+              <span class="bad-text">({{open_fault_counts.get(r.id, 0)}} {{t('open')}})</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="inline-actions">
+              <a class="button small secondary" href="{{url_for('inspection_detail',iid=r.id)}}">{{t('view')}}</a>
+              {% if user.role in ('admin', 'supervisor') and r.status != 'approved' %}
+              <form method="post" action="{{url_for('approve_inspection',iid=r.id)}}">
+                <input type="hidden" name="csrf" value="{{csrf_token()}}">
+                <button type="submit" class="button small primary">{{t('approve')}}</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty">{{t('no_data')}}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% if user.role == 'admin' %}
+<section class="panel">
+  <div class="panel-head">
+    <h2>{{t('activity')}} ({{audits|length}})</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Actor ({{t('employee')}})</th>
+          <th>Event</th>
+          <th>Timestamp (UTC)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in audits %}
+        <tr>
+          <td class="mono">#{{a.id}}</td>
+          <td class="mono"><strong>{{a.actor_employee_id}}</strong></td>
+          <td>{{a.event}}</td>
+          <td class="mono">{{a.at.strftime('%Y-%m-%d %H:%M:%S') if a.at else '—'}}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">{{t('no_data')}}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}

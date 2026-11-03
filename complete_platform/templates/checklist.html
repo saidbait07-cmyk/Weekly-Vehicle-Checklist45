@@ -1,0 +1,75 @@
+<div class="grid2">
+  <section class="panel">
+    <h2>{{t('add_item')}}</h2>
+    <p class="muted">
+      Add custom fleet inspection rows or manage existing rows. Historical inspection answers preserve a snapshot of the item label at submission time. Mandatory sign-off rows (28–31) are protected and cannot be disabled.
+    </p>
+    <form method="post" class="stack">
+      <input type="hidden" name="csrf" value="{{csrf_token()}}">
+      <input type="hidden" name="action" value="add">
+      <label>
+        <span>{{t('item_label')}}</span>
+        <input name="label" placeholder="e.g. Spare Wheel &amp; Pressure" required>
+      </label>
+      <label>
+        <span>Arabic Label (Optional)</span>
+        <input name="label_ar" dir="rtl" placeholder="الاطار الاحتياطي">
+      </label>
+      <label>
+        <span>Hindi Label (Optional)</span>
+        <input name="label_hi" placeholder="स्पेयर व्हील">
+      </label>
+      <label>
+        <span>Urdu Label (Optional)</span>
+        <input name="label_ur" dir="rtl" placeholder="اضافی ٹائر">
+      </label>
+      <button type="submit" class="button primary">{{t('save')}}</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>{{t('all_items')}} · {{items|length}} Rows</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{t('item')}}</th>
+            <th>{{t('status')}}</th>
+            <th>{{t('actions')}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in items %}
+          <tr>
+            <td class="mono">{{i.order}}</td>
+            <td>
+              <strong>{{item_name(i)}}</strong>
+              {% if lang != 'en' %}<small class="muted" style="display:block">{{i.label}}</small>{% endif %}
+            </td>
+            <td>
+              <span class="status-text {{'status-good' if i.active else 'status-bad'}}">
+                {{t('enabled') if i.active else t('disabled')}}
+              </span>
+            </td>
+            <td>
+              {% if 28 <= i.order <= 31 %}
+                <span class="muted">Mandatory Sign-Off</span>
+              {% else %}
+                <form method="post" style="display:inline-block">
+                  <input type="hidden" name="csrf" value="{{csrf_token()}}">
+                  <input type="hidden" name="action" value="toggle">
+                  <input type="hidden" name="item_id" value="{{i.id}}">
+                  <button type="submit" class="button small {{'secondary' if i.active else 'primary'}}">
+                    {{'Disable' if i.active else 'Enable'}}
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

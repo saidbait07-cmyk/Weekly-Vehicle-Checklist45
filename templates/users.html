@@ -1,0 +1,87 @@
+<div class="grid2">
+  <section class="panel">
+    <h2>{{t('register_user')}}</h2>
+    <p class="muted">{{t('account_notice')}}</p>
+    <form method="post" class="stack">
+      <input type="hidden" name="csrf" value="{{csrf_token()}}">
+      <label>
+        <span>{{t('employee')}}</span>
+        <input name="employee_id" placeholder="e.g. EMP-DRV05" required>
+      </label>
+      <label>
+        <span>{{t('name')}}</span>
+        <input name="name" placeholder="Full Name" required>
+      </label>
+      <label>
+        <span>{{t('initial_password')}}</span>
+        <input name="password" type="password" minlength="12" placeholder="Minimum 12 characters" required>
+      </label>
+      <label>
+        <span>{{t('role')}}</span>
+        <select name="role">
+          <option value="driver">Driver</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="admin">Admin</option>
+        </select>
+      </label>
+      <button type="submit" class="button primary">{{t('save')}}</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Security &amp; Access Policy</h2>
+    <p class="muted">
+      All employee accounts sign in exclusively with their <strong>Employee ID</strong> and password.
+      Public self-registration is disabled. Passwords are stored as salted cryptographic hashes.
+    </p>
+    <form method="get" action="{{url_for('users')}}" class="search-row" style="margin-top: 16px;">
+      <input name="q" value="{{q or ''}}" placeholder="Filter employees by Employee ID, name, or role...">
+      <button type="submit" class="button secondary">{{t('search')}}</button>
+    </form>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>{{t('users')}} ({{people|length}})</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{{t('employee')}}</th>
+          <th>{{t('name')}}</th>
+          <th>{{t('role')}}</th>
+          <th>{{t('status')}}</th>
+          <th>{{t('actions')}}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in people %}
+        <tr>
+          <td class="mono"><strong>{{p.employee_id}}</strong></td>
+          <td>{{p.name}}</td>
+          <td>{{p.role|title}}</td>
+          <td>
+            <span class="status-text {{'status-good' if p.active else 'status-bad'}}">
+              {{t('active') if p.active else t('inactive')}}
+            </span>
+          </td>
+          <td>
+            <form method="post">
+              <input type="hidden" name="csrf" value="{{csrf_token()}}">
+              <input type="hidden" name="action" value="toggle">
+              <input type="hidden" name="user_id" value="{{p.id}}">
+              <button type="submit" class="button small {{'danger' if p.active else 'secondary'}}">
+                {{t('deactivate') if p.active else t('reactivate')}}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">{{t('no_data')}}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

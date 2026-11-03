@@ -1,0 +1,276 @@
+<div class="stats">
+  <div class="stat">
+    <div class="stat-head"><span>{{t('assigned_vehicles')}}</span></div>
+    <div class="stat-body">
+      <div class="stat-icon blue-tint" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 17h4V5H2v12h3"/><path d="M20 17h2v-3.34a4 4 0 0 0-1.17-2.83L19 9h-5v8h1"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+      </div>
+      <div>
+        <strong class="mono">{{vehicles|length}}</strong>
+        <small class="stat-sub">Under Supervision</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-head"><span>{{t('drivers')}}</span></div>
+    <div class="stat-body">
+      <div class="stat-icon blue-tint" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <div>
+        <strong class="mono">{{active_drivers}}</strong>
+        <small class="stat-sub">Active Fleet Drivers</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat">
+    <div class="stat-head"><span>{{t('today_inspections')}}</span></div>
+    <div class="stat-body">
+      <div class="stat-icon blue-tint" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <div>
+        <strong class="mono">{{today_inspections}}</strong>
+        <small class="stat-sub">{{today().isoformat()}}</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat warning">
+    <div class="stat-head"><span>{{t('pending_faults')}}</span></div>
+    <div class="stat-body">
+      <div class="stat-icon amber-tint" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div>
+        <strong class="mono">{{faults}}</strong>
+        <small class="stat-sub bad-text">Assigned Vehicles</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% set v_total = (vehicles|length) if (vehicles|length) > 0 else 1 %}
+{% set g_pct = ((good_count / v_total) * 100)|round|int %}
+{% set min_pct = ((minor_count / v_total) * 100)|round|int %}
+{% set maj_pct = max(0, 100 - g_pct - min_pct) %}
+
+<div class="charts-grid">
+  <section class="panel chart-panel">
+    <div class="panel-head">
+      <h2>{{t('vehicle_status')}}</h2>
+    </div>
+    <div class="donut-layout">
+      <div class="donut-wrap">
+        <svg viewBox="0 0 42 42" class="donut-svg" aria-label="{{t('vehicle_status')}}">
+          <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#e2eaf1" stroke-width="5"></circle>
+          <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#10a66a" stroke-width="5"
+                  stroke-dasharray="{{g_pct}} {{100 - g_pct}}" stroke-dashoffset="25"></circle>
+          <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#edaa26" stroke-width="5"
+                  stroke-dasharray="{{min_pct}} {{100 - min_pct}}" stroke-dashoffset="{{125 - g_pct}}"></circle>
+          <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#dc4f57" stroke-width="5"
+                  stroke-dasharray="{{maj_pct}} {{100 - maj_pct}}" stroke-dashoffset="{{125 - g_pct - min_pct}}"></circle>
+        </svg>
+        <div class="donut-center">
+          <strong class="mono">{{vehicles|length}}</strong>
+          <span>{{t('vehicles')}}</span>
+        </div>
+      </div>
+
+      <div class="donut-legend">
+        <div class="legend-item">
+          <span class="legend-swatch swatch-green"></span>
+          <div>
+            <strong>{{t('good_vehicles')}}</strong>
+            <span class="mono">{{good_count}} ({{g_pct}}%)</span>
+          </div>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch swatch-amber"></span>
+          <div>
+            <strong>{{t('minor_issues')}}</strong>
+            <span class="mono">{{minor_count}} ({{min_pct}}%)</span>
+          </div>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch swatch-red"></span>
+          <div>
+            <strong>{{t('major_issues')}}</strong>
+            <span class="mono">{{major_count}} ({{maj_pct}}%)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel chart-panel">
+    <div class="panel-head">
+      <h2>{{t('weekly_inspections')}}</h2>
+      <div class="bar-legend-inline">
+        <span><i class="swatch-blue"></i> {{t('passed_label')}}</span>
+        <span><i class="swatch-red"></i> {{t('failed_label')}}</span>
+      </div>
+    </div>
+    <div class="bar-chart-box">
+      {% for idx in range(week_days|length) %}
+        {% set wp = week_passed[idx] %}
+        {% set wf = week_failed[idx] %}
+        {% set p_h = min(100, (wp * 28) + 10) if wp > 0 else 4 %}
+        {% set f_h = min(100, (wf * 28) + 10) if wf > 0 else 4 %}
+        <div class="bar-col">
+          <div class="bar-pair">
+            <div class="bar-fill bar-blue" style="height: {{p_h}}%;" title="{{t('passed_label')}}: {{wp}}"></div>
+            <div class="bar-fill bar-red" style="height: {{f_h}}%;" title="{{t('failed_label')}}: {{wf}}"></div>
+          </div>
+          <span class="bar-label">{{week_days[idx]}}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-head">
+    <div class="tab-bar" role="tablist">
+      <button type="button" class="tab-btn active" data-tab-target="sup-vehicles">{{t('my_vehicles')}} ({{vehicles|length}})</button>
+      <button type="button" class="tab-btn" data-tab-target="sup-inspections">{{t('recent')}} ({{recent|length}})</button>
+      <button type="button" class="tab-btn" data-tab-target="sup-faults">{{t('fault_reports')}} ({{faults}})</button>
+    </div>
+    <a class="button secondary small" href="{{url_for('export')}}">{{t('export')}}</a>
+  </div>
+
+  <!-- Tab 1: My Vehicles -->
+  <div class="tab-pane active" id="sup-vehicles">
+    {% if vehicle_rows %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{t('plate')}}</th>
+            <th>{{t('model_desc')}}</th>
+            <th>{{t('driver_user')}}</th>
+            <th>Last Inspection</th>
+            <th>{{t('status')}}</th>
+            <th>{{t('actions')}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vehicle_rows %}
+          {% set v = row.vehicle %}
+          <tr>
+            <td><a class="plate-link mono" href="{{url_for('vehicle_detail',vid=v.id)}}">{{v.plate}}</a></td>
+            <td>{{v.vehicle_type}} · <span class="muted">{{v.description}}</span></td>
+            <td>{{row.driver_name}}</td>
+            <td class="mono">{{row.last_date}}</td>
+            <td>
+              {% if row.open_faults == 0 %}
+                <span class="status-text status-good">{{t('passed_label')}}</span>
+              {% else %}
+                <span class="status-text status-bad">{{t('failed_label')}} ({{row.open_faults}} {{t('open')}})</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="inline-actions">
+                <a class="button small secondary" href="{{url_for('vehicle_detail',vid=v.id)}}">{{t('view')}}</a>
+                <a class="button small secondary" href="{{url_for('vehicle_qr',vid=v.id)}}">{{t('qr')}}</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty">{{t('no_data')}}</p>
+    {% endif %}
+  </div>
+
+  <!-- Tab 2: Recent Inspections & Approval -->
+  <div class="tab-pane" id="sup-inspections" hidden>
+    {% if recent %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>{{t('date')}}</th>
+            <th>{{t('plate')}}</th>
+            <th>{{t('driver_user')}}</th>
+            <th>{{t('odometer')}}</th>
+            <th>{{t('supervisor_sign')}}</th>
+            <th>{{t('actions')}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in recent %}
+          <tr>
+            <td class="mono">#{{i.id}}</td>
+            <td class="mono">{{i.day}}</td>
+            <td class="mono">{{plates.get(i.vehicle_id, i.vehicle_id)}}</td>
+            <td>{{names.get(i.driver_id, '—')}}</td>
+            <td class="mono">{{i.odometer}} km</td>
+            <td>
+              <span class="status-text {{'status-good' if i.status == 'approved' else 'status-warn'}}">
+                {{t('approved') if i.status == 'approved' else t('pending_approval')}}
+              </span>
+            </td>
+            <td>
+              <div class="inline-actions">
+                <a class="button small secondary" href="{{url_for('inspection_detail',iid=i.id)}}">{{t('view')}}</a>
+                {% if i.status != 'approved' %}
+                <form method="post" action="{{url_for('approve_inspection',iid=i.id)}}">
+                  <input type="hidden" name="csrf" value="{{csrf_token()}}">
+                  <button type="submit" class="button small primary">{{t('approve')}}</button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty">{{t('no_data')}}</p>
+    {% endif %}
+  </div>
+
+  <!-- Tab 3: Open Fault Reports -->
+  <div class="tab-pane" id="sup-faults" hidden>
+    {% if open_faults_list %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>{{t('plate')}}</th>
+            <th>{{t('details')}}</th>
+            <th>{{t('actions')}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in open_faults_list %}
+          {% set insp = inspections_map.get(f.inspection_id) %}
+          <tr>
+            <td class="mono">#{{f.id}}</td>
+            <td class="mono">{{plates.get(insp.vehicle_id, '') if insp else ''}}</td>
+            <td>{{f.description}}</td>
+            <td>
+              <form method="post" action="{{url_for('resolve_fault',fid=f.id)}}" class="resolve-inline-form">
+                <input type="hidden" name="csrf" value="{{csrf_token()}}">
+                <input name="action_taken" class="resolve-input" placeholder="{{t('action_taken')}}" required>
+                <button type="submit" class="button small primary">{{t('resolve')}}</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty">{{t('no_data')}}</p>
+    {% endif %}
+  </div>
+</section>

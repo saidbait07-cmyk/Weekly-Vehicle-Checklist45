@@ -1,0 +1,82 @@
+<section class="panel">
+  <h2>{{t('search')}}</h2>
+  <form method="get" action="{{url_for('search')}}" class="search-row">
+    <input name="q" value="{{q or ''}}" placeholder="{{t('search_hint')}}" autofocus>
+    <button type="submit" class="button primary">{{t('search')}}</button>
+  </form>
+
+  {% if q %}
+  <h3>{{t('vehicles')}} ({{vehicles|length}})</h3>
+  {% if vehicles %}
+  <div class="vehicle-grid">
+    {% for v in vehicles %}
+    <a class="vehicle-card" href="{{url_for('vehicle_detail',vid=v.id)}}">
+      <strong class="mono">{{v.plate}}</strong>
+      <small>{{v.vehicle_type}} · {{v.description}}</small>
+      <span class="status-text status-good">{{t('view')}} →</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">{{t('no_data')}}</p>
+  {% endif %}
+
+  {% if user.role == 'admin' %}
+  <h3>{{t('users')}} ({{people|length}})</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{{t('employee')}}</th>
+          <th>{{t('name')}}</th>
+          <th>{{t('role')}}</th>
+          <th>{{t('status')}}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in people %}
+        <tr>
+          <td class="mono"><strong>{{p.employee_id}}</strong></td>
+          <td>{{p.name}}</td>
+          <td>{{p.role|title}}</td>
+          <td>{{t('active') if p.active else t('inactive')}}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty">{{t('no_data')}}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <h3>{{t('inspections')}} ({{inspections|length}})</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>{{t('date')}}</th>
+          <th>{{t('plate')}}</th>
+          <th>{{t('driver_user')}}</th>
+          <th>{{t('status')}}</th>
+          <th>{{t('actions')}}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in inspections %}
+        <tr>
+          <td class="mono">#{{i.id}}</td>
+          <td class="mono">{{i.day}}</td>
+          <td class="mono">{{plates.get(i.vehicle_id, i.vehicle_id)}}</td>
+          <td>{{names.get(i.driver_id, '—')}}</td>
+          <td>{{t('approved') if i.status == 'approved' else t('pending_approval')}}</td>
+          <td><a class="button small secondary" href="{{url_for('inspection_detail',iid=i.id)}}">{{t('view')}}</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty">{{t('no_data')}}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
